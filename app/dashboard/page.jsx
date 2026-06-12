@@ -31,8 +31,11 @@ export default function Dashboard() {
 
   async function createBot() {
     if (!form.business_name.trim()) return;
-    const { data, error } = await supabase.from("chatbots").insert(form).select().single();
-    if (!error && data) { setCreating(false); setForm({ ...form, business_name: "", knowledge: "" }); await loadBots(); setActive(data); }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push("/login"); return; }
+    const { data, error } = await supabase.from("chatbots").insert({ ...form, owner: user.id }).select().single();
+    if (error) { alert("Could not create assistant: " + error.message); return; }
+    if (data) { setCreating(false); setForm({ ...form, business_name: "", knowledge: "" }); await loadBots(); setActive(data); }
   }
 
   async function signOut() { await supabase.auth.signOut(); router.push("/login"); }
@@ -49,7 +52,6 @@ export default function Dashboard() {
       </header>
 
       <div className="grid cols-2" style={{ alignItems: "start", marginTop: 8 }}>
-        {/* Left: bots + create */}
         <div>
           <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
             <h2 style={{ margin: 0, fontSize: 24 }}>Your assistants</h2>
@@ -66,7 +68,7 @@ export default function Dashboard() {
               <label className="field"><span>Greeting</span>
                 <input value={form.greeting} onChange={(e) => setForm({ ...form, greeting: e.target.value })} /></label>
               <label className="field"><span>What should it know? (hours, services, FAQs)</span>
-                <textarea value={form.knowledge} placeholder="Open Mon–Fri 8–6. We do checkups, fillings, whitening. Most insurance accepted. On Hay St, Perth."
+                <textarea value={form.knowledge} placeholder="Open Mon-Fri 8-6. We do checkups, fillings, whitening. Most insurance accepted. On Hay St, Perth."
                   onChange={(e) => setForm({ ...form, knowledge: e.target.value })} /></label>
               <button className="btn btn-solid" style={{ width: "100%" }} onClick={createBot}>Create assistant</button>
             </div>
@@ -84,14 +86,13 @@ export default function Dashboard() {
           {active && (
             <div className="card" style={{ marginTop: 8 }}>
               <div className="eyebrow">Embed snippet</div>
-              <p className="muted" style={{ fontSize: 14, marginTop: 0 }}>Paste this before <code>&lt;/body&gt;</code> on the client&apos;s website.</p>
+              <p className="muted" style={{ fontSize: 14, marginTop: 0 }}>Paste this before &lt;/body&gt; on the client&apos;s website.</p>
               <div className="snippet">{snippet}</div>
               <a className="btn btn-line" style={{ marginTop: 12 }} href={`/c/${active.id}`} target="_blank" rel="noreferrer">Open live test page →</a>
             </div>
           )}
         </div>
 
-        {/* Right: leads */}
         <div>
           <h2 style={{ fontSize: 24 }}>Leads {active ? `· ${active.business_name}` : ""}</h2>
           {!active && <p className="muted">Select an assistant to see its leads.</p>}
