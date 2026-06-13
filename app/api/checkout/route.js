@@ -1,5 +1,6 @@
 import Stripe from "stripe";
-import { supabaseServer } from "../../../lib/supabase";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,12 @@ export async function POST(req) {
     const price = PRICE[plan];
     if (!price) return Response.json({ error: "Unknown plan" }, { status: 400 });
 
-    const supabase = supabaseServer();
+    const store = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      { cookies: { getAll: () => store.getAll(), setAll: () => {} } }
+    );
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return Response.json({ error: "Not signed in" }, { status: 401 });
 
@@ -30,7 +36,7 @@ export async function POST(req) {
       metadata: { user_id: user.id, plan },
       discounts: process.env.STRIPE_COUPON ? [{ coupon: process.env.STRIPE_COUPON }] : [],
       success_url: `${site}/dashboard?paid=1`,
-      cancel_url: `${site}/pricing?canceled=1`,
+      cancel_url: `${site}/?canceled=1`,
     });
 
     return Response.json({ url: session.url });
