@@ -28,8 +28,9 @@ export async function POST(req) {
       customer_email: user.email,
       client_reference_id: user.id,
       metadata: { user_id: user.id, plan },
+      discounts: process.env.STRIPE_COUPON ? [{ coupon: process.env.STRIPE_COUPON }] : [],
       success_url: `${site}/dashboard?paid=1`,
-      cancel_url: `${site}/dashboard?canceled=1`,
+      cancel_url: `${site}/pricing?canceled=1`,
     });
 
     return Response.json({ url: session.url });
