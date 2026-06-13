@@ -2,6 +2,26 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
+function PlanButton({ plan, hot }) {
+  async function go() {
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.url) { window.location.href = data.url; }
+      else { window.location.href = "/signup?plan=" + plan; }
+    } catch { window.location.href = "/signup?plan=" + plan; }
+  }
+  return (
+    <button onClick={go} className={`fd-btn ${hot ? "fd-solid" : "fd-line"}`} style={{ width: "100%", textAlign: "center" }}>
+      Start free trial
+    </button>
+  );
+}
+
 const DEMO_BOT_ID = "d61bb035-ea02-47e0-ad2b-7c876b7a2579";
 const SUGGESTIONS = ["What are your opening hours?", "Do you take new patients?", "I think I chipped a tooth"];
 
@@ -75,9 +95,9 @@ function DemoChat() {
 }
 
 const PLANS = [
-  { key: "starter", name: "Starter", price: 99, tag: "", feats: ["1 AI assistant", "Up to 500 chats / month", "Lead inbox + email alerts", "Works on any website"], hot: false },
-  { key: "pro", name: "Pro", price: 149, tag: "Most popular", feats: ["3 AI assistants", "Unlimited chats", "Appointment booking", "Remove Frontdesk branding", "Priority email support"], hot: true },
-  { key: "agency", name: "Agency", price: 199, tag: "", feats: ["Unlimited assistants", "Manage multiple clients", "White-label dashboard", "Everything in Pro"], hot: false },
+  { key: "starter", name: "Starter", price: 99, tag: "", feats: ["1 AI assistant", "Answers visitors 24/7", "Captures every lead", "Works on any website", "Email support"], hot: false },
+  { key: "pro", name: "Pro", price: 149, tag: "Most popular", feats: ["Up to 3 AI assistants", "Everything in Starter", "Priority support"], hot: true },
+  { key: "agency", name: "Agency", price: 199, tag: "", feats: ["Unlimited assistants", "Manage multiple businesses", "Everything in Pro"], hot: false },
 ];
 const FAQ = [
   ["How long does setup take?", "About 5 minutes. Paste in your hours and services, drop one line of code on your site, and you're live."],
@@ -170,7 +190,7 @@ export default function Home() {
               <h3>{p.name}</h3>
               <div className="fd-price">${p.price}<small>/mo</small></div>
               <ul>{p.feats.map((f) => <li key={f}>{f}</li>)}</ul>
-              <Link href={`/signup?plan=${p.key}`} className={`fd-btn ${p.hot ? "fd-solid" : "fd-line"}`} style={{ width: "100%", textAlign: "center" }}>Start free trial</Link>
+              <PlanButton plan={p.key} hot={p.hot} />
             </div>
           ))}
         </div>
