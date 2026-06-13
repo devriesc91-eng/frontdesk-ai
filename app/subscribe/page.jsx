@@ -31,3 +31,12 @@ export default async function Subscribe({ searchParams }) {
     mode: "subscription",
     line_items: [{ price, quantity: 1 }],
     customer_email: user.email,
+    client_reference_id: user.id,
+    metadata: { user_id: user.id, plan },
+    discounts: process.env.STRIPE_COUPON ? [{ coupon: process.env.STRIPE_COUPON }] : [],
+    success_url: `${site}/dashboard?paid=1`,
+    cancel_url: `${site}/?canceled=1`,
+  });
+
+  redirect(session.url);
+}
